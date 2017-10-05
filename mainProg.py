@@ -9,7 +9,9 @@ import numpy as np
 import cv2
 import os
 import matplotlib.pyplot as plt
-
+import pickle
+from moviepy.editor import VideoFileClip
+from IPython.display import HTML
 
 def LoadImages(folder):
     images =[]
@@ -19,37 +21,21 @@ def LoadImages(folder):
             images.append(img)
     return images
 
+'''
 def Debug():
     imagesDebug = LoadImages("./test_images")
     mtx, dist = Callibrate(LoadImages("camera_cal"))
     plt.imshow(imagesDebug [0])
     plt.show()
     return
+'''
 
 def Sharpen(image):
     gb = cv2.GaussianBlur(image, (5,5), 20.0)
     return cv2.addWeighted(image, 2, gb, -1, 0)
 
 
-def Callibrate(images):
-    nx = 9
-    ny = 6
-    objPoints = []
-    imgPoints = []
-    objp = np.zeros((nx*ny, 3), np.float32)
-    objp[:, :2] = np.mgrid[0:nx, 0:ny].T.reshape(-1, 2)
-    
-    for image in images:
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        ret, corners = cv2.findChessboardCorners(gray, (nx, ny), None)
-       
-        if ret == True:
-            imgPoints.append(corners)
-            objPoints.append(objp)
-            
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objPoints, imgPoints, gray.shape[::-1], None, None)
 
-    return mtx, dist
 
 def UnDist(image , mtx, dist):
     return cv2.undistort(image, mtx, dist, None, mtx)
@@ -352,40 +338,54 @@ def DrawLane(image, warped, ploty, left_fitx, right_fitx, Minv):
     # Combine the result with the original image
     result = cv2.addWeighted(image, 1, newwarp, 0.3, 0)
     result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
-    plt.imshow(result)
-    plt.show()
+    #plt.imshow(result)
+    #plt.show()
     return result
 
 
-def PipeLine():
-    calFolderName = "./camera_cal"
-    images = LoadImages(calFolderName)
-    mtx, dist = Callibrate(images)
+
+def PipeLine(new_image):
     
-    testFolderName = "./test_images"
-    imagesTest = LoadImages(testFolderName)
+    image = np.copy(new_image)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
+    coeff = pickle.load(open("calibratioin.p", "rb"))
+    mtx, dist = coeff
+    
+    
+    #testFolderName = "./test_images"
+    #imagesTest = LoadImages(testFolderName)
     
     #img_size = (1280, 223)
     
-    undistortedTestImages = []
+    #undistortedTestImages = []
     
-    M, Minv = GetTransform(imagesTest[0])
+    M, Minv = GetTransform(image)
     
-    for image in imagesTest:
-        undist = UnDist(image, mtx, dist)
-        #undist = Sharpen(undist)
-        undist = GradientThresholdImage(undist)
-        undist = Transform(undist, M )
-        ploty, left_fitx, right_fitx = SlidingWindow(undist)
-        #ExtrapolatePolyfit(undist, left_fit, right_fit)
-        DrawLane(image, undist, ploty, left_fitx, right_fitx, Minv)
-        undistortedTestImages.append(undist)
+
+    undist = UnDist(image, mtx, dist)
+    #undist = Sharpen(undist)
+    undist = GradientThresholdImage(undist)
+    undist = Transform(undist, M )
+    ploty, left_fitx, right_fitx = SlidingWindow(undist)
+    #ExtrapolatePolyfit(undist, left_fit, right_fit)
+    image = DrawLane(image, undist, ploty, left_fitx, right_fitx, Minv)
+    #undistortedTestImages.append(undist)
         
     #PlotImages(undistortedTestImages)
+    return image
+
+def VideoProcess():
+
+    video_output1 = 'project_video_output.mp4'
+    video_input1 = VideoFileClip('project_video.mp4')#.subclip(22,26)
+    processed_video = video_input1.fl_image(PipeLine)
+    processed_video.write_videofile(video_output1, audio=False)
     return
 
 
-
 if (__name__ == "__main__"):
-    PipeLine()
+    #PipeLine()
     #Debug()
+    VideoProcess()
+    
