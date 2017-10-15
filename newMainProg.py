@@ -394,7 +394,21 @@ def DrawLane(image, warped, ploty, left_fitx, right_fitx, Minv):
     #plt.show()
     return result
 
-
+def Data(original_img, l_rad, r_rad, center_dist):
+    curv_rad = (l_rad+r_rad)/2
+    new_img = np.copy(original_img)
+    font = cv2.FONT_HERSHEY_DUPLEX
+    text = 'Curve radius: ' + '{:04.2f}'.format(curv_rad) + 'm'
+    cv2.putText(new_img, text, (40,70), font, 1.5, (200,255,155), 2, cv2.LINE_AA)
+    direction = ''
+    if center_dist > 0:
+        direction = 'right'
+    elif center_dist < 0:
+        direction = 'left'
+    abs_center_dist = abs(center_dist)
+    text = '{:04.3f}'.format(abs_center_dist) + 'm ' + direction + ' of center'
+    cv2.putText(new_img, text, (40,120), font, 1.5, (200,255,155), 2, cv2.LINE_AA)
+    return new_img
 
 def PipeLine(new_image):
     
@@ -445,16 +459,19 @@ def PipeLine(new_image):
     
     else:
         img_out = image
+        
+    left_curverad, right_curverad, center_dist = Calculations(undist, l_fit, r_fit, l_lane_inds, r_lane_inds)
+    
+    img_out = Data(img_out, left_curverad, right_curverad, center_dist)
     #image = DrawLane(image, undist, ploty, left_fitx, right_fitx, Minv)
     #undistortedTestImages.append(undist)
         
     #PlotImages(undistortedTestImages)
     return img_out
 
-def VideoProcess():
 
 
-    return
+
 
 
 if (__name__ == "__main__"):
