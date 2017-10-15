@@ -267,15 +267,15 @@ def SlidingWindow(binary_warped):
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [100, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 100]
     
-    
+    '''
     plt.imshow(out_img)
     plt.plot(left_fitx, ploty, color='yellow')
     plt.plot(right_fitx, ploty, color='yellow')
     plt.xlim(0, 1280)
     plt.ylim(720, 0)
     plt.show()
-    
-    return ploty, left_fitx, right_fitx
+    '''
+    return ploty, left_fit, right_fit, left_fitx, right_fitx, right_lane_inds, left_lane_inds
 
 def ExtrapolatePolyfit(binary_warped, left_fit, right_fit):
     nonzero = binary_warped.nonzero()
@@ -323,13 +323,15 @@ def ExtrapolatePolyfit(binary_warped, left_fit, right_fit):
     cv2.fillPoly(window_img, np.int_([left_line_pts]), (0,255, 0))
     cv2.fillPoly(window_img, np.int_([right_line_pts]), (0,255, 0))
     result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
+    '''
     plt.imshow(result)
     plt.plot(left_fitx, ploty, color='yellow')
     plt.plot(right_fitx, ploty, color='yellow')
     plt.xlim(0, 1280)
     plt.ylim(720, 0)
     plt.show()
-    return left_fitx, right_fitx
+    '''
+    return ploty, left_fit, right_fit, left_fitx, right_fitx, right_lane_inds, left_lane_inds
 
 def Calculations(bin_img, l_fit, r_fit, l_lane_inds, r_lane_inds):
     # Define conversions in x and y from pixels space to meters
@@ -420,9 +422,9 @@ def PipeLine(new_image):
     undist = GradientThresholdImage(undist)
 
     if not l_line.detected or not r_line.detected:
-        ploty, l_fit, r_fit, l_lane_inds, r_lane_inds = SlidingWindow(undist)
+        ploty, l_fit, r_fit, l_fit_x, r_fit_x, r_lane_inds, l_lane_inds = SlidingWindow(undist)
     else:
-        ploty, l_fit, r_fit, l_lane_inds, r_lane_inds = ExtrapolatePolyfit(undist, l_line.best_fit, r_line.best_fit)
+        ploty, l_fit, r_fit, l_fit_x, r_fit_x,  r_lane_inds, l_lane_inds = ExtrapolatePolyfit(undist, l_line.best_fit, r_line.best_fit)
     #ExtrapolatePolyfit(undist, left_fit, right_fit)
     
     if l_fit is not None and r_fit is not None:
@@ -439,7 +441,7 @@ def PipeLine(new_image):
     r_line.add_fit(r_fit, r_lane_inds)
     
     if l_line.best_fit is not None and r_line.best_fit is not None:
-        img_out = DrawLane(image, undist, ploty,  l_line.best_fit, r_line.best_fit, Minv)
+        img_out = DrawLane(image, undist, ploty,  l_fit_x, r_fit_x, Minv)
     
     else:
         img_out = image
