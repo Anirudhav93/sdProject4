@@ -24,6 +24,7 @@ def Callibrate():
     images = LoadImages(calFolderName)
     nx = 9
     ny = 6
+    #i = 1
     objPoints = []
     imgPoints = []
     objp = np.zeros((nx*ny, 3), np.float32)
@@ -36,7 +37,13 @@ def Callibrate():
         if ret == True:
             imgPoints.append(corners)
             objPoints.append(objp)
-            
+            '''
+            cv2.drawChessboardCorners(image, (nx, ny), corners, ret)
+            cv2.imshow("image", image)
+            cv2.imwrite("chessboard_image_{0}.jpeg".format(i), image)
+            i = i+1
+            cv2.waitKey()
+            '''
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objPoints, imgPoints, gray.shape[::-1], None, None)
     
     coeff = mtx, dist
