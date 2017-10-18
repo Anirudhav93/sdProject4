@@ -30,8 +30,9 @@ def Sharpen(image):
 
 
 
-def UnDist(image , mtx, dist):
-    return cv2.undistort(image, mtx, dist, None, mtx)
+def UnDist(image , mtx, dist, newMtx):
+    undistortedImage = cv2.undistort(image, mtx, dist, None, mtx)
+    return undistortedImage
     
 
 class Line():
@@ -173,7 +174,7 @@ def PlotImages(images):
     i = 1
     for image in images:
         cv2.imshow("image {0}".format(i), image)
-        cv2.imwrite("pipeline_output_image_{0}.jpeg".format(i), image)
+        cv2.imwrite("undistorted_output_image_{0}.jpeg".format(i), image)
         cv2.waitKey()
         i = i+1
     return
@@ -430,20 +431,31 @@ def PipeLine(new_image):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
     coeff = pickle.load(open("calibratioin.p", "rb"))
-    mtx, dist = coeff
+    mtx, dist, newMtx, roi = coeff
     
+    x, y, w, h = roi
     
-    M, Minv = GetTransform(image)
+    testFolderName = "./test_images"
+    imagesTest = LoadImages(testFolderName)
+    
+    undistortedTestImages = []
+    
+
+    M, Minv = GetTransform(imagesTest[0])
 
 
-    holder = UnDist(image, mtx, dist)
+    holder =  UnDist(image, mtx, dist, newMtx)
 
+    undistortedTestImages.append(holder)
+    
+    #PlotImages(undistortedTestImages)
+    
     holder = Transform(holder, M )
-    
+        
     holder = ThresholdImage(holder)
     
 
-    
+
     #maintain records in the line class accordingly
     if not l_line.detected or not r_line.detected:
         ploty, l_fit, r_fit, l_fit_x, r_fit_x, r_lane_inds, l_lane_inds = SlidingWindow(holder)
@@ -470,8 +482,9 @@ def PipeLine(new_image):
         
     left_curverad, right_curverad, center_dist = Calculations(holder, l_fit, r_fit, l_lane_inds, r_lane_inds)
     
+    #img_out = img_out[y:y+h, x:x+w]
     img_out = Data(img_out, left_curverad, right_curverad, center_dist)
-    
+
         
 
        
@@ -493,10 +506,10 @@ if (__name__ == "__main__"):
     l_line = Line()
     r_line = Line()
 
-    
+
     #process the video one image at a time
     video_output1 = 'project_video_output.mp4'
     video_input1 = VideoFileClip('project_video.mp4')#.subclip(22,26)
     processed_video = video_input1.fl_image(PipeLine)
     processed_video.write_videofile(video_output1, audio=False)
-    
+
