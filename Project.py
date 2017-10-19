@@ -388,9 +388,12 @@ def DrawLane(image, warped, ploty, left_fitx, right_fitx, Minv):
     # Combine the result with the original image
     result = cv2.addWeighted(image, 1, newwarp, 0.3, 0)
     result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
-    #plt.imshow(result)
-    #plt.show()
+    '''
+    plt.imshow(result)
+    plt.show()
+    '''
     return result
+
 
 def Data(original_img, l_rad, r_rad, center_dist):
     curv_rad = (l_rad+r_rad)/2
@@ -438,15 +441,15 @@ def PipeLine(new_image):
     testFolderName = "./test_images"
     imagesTest = LoadImages(testFolderName)
     
-    undistortedTestImages = []
+    #undistortedTestImages = []
     
 
     M, Minv = GetTransform(imagesTest[0])
 
 
-    holder =  UnDist(image, mtx, dist, newMtx)
-
-    undistortedTestImages.append(holder)
+    holder =  UnDist(image, mtx, dist, mtx)
+    undistortedImage = UnDist(image, mtx, dist, mtx)
+    #undistortedTestImages.append(holder)
     
     #PlotImages(undistortedTestImages)
     
@@ -475,14 +478,14 @@ def PipeLine(new_image):
     r_line.add_fit(r_fit, r_lane_inds)
     
     if l_line.best_fit is not None and r_line.best_fit is not None:
-        img_out = DrawLane(image, holder, ploty,  l_fit_x, r_fit_x, Minv)
+        img_out = DrawLane(undistortedImage, holder, ploty,  l_fit_x, r_fit_x, Minv)
     
     else:
         img_out = image
         
     left_curverad, right_curverad, center_dist = Calculations(holder, l_fit, r_fit, l_lane_inds, r_lane_inds)
     
-    img_out = img_out[y:y+h, x:x+w]
+    #img_out = img_out[y:y+h, x:x+w]
     img_out = Data(img_out, left_curverad, right_curverad, center_dist)
 
         
