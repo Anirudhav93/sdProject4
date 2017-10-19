@@ -31,7 +31,7 @@ def Sharpen(image):
 
 
 def UnDist(image , mtx, dist, newMtx):
-    undistortedImage = cv2.undistort(image, mtx, dist, None, mtx)
+    undistortedImage = cv2.undistort(image, mtx, dist, None, newMtx)
     return undistortedImage
     
 
@@ -482,7 +482,7 @@ def PipeLine(new_image):
         
     left_curverad, right_curverad, center_dist = Calculations(holder, l_fit, r_fit, l_lane_inds, r_lane_inds)
     
-    #img_out = img_out[y:y+h, x:x+w]
+    img_out = img_out[y:y+h, x:x+w]
     img_out = Data(img_out, left_curverad, right_curverad, center_dist)
 
         
